@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.myportfolio.web.dao.BoardMapper">
+    <select id="select" parameterType="int" resultType="BoardDto">
+        select bno,
+               title,
+               content,
+               writer,
+               view_cnt,
+               comment_cnt,
+               reg_date,
+               up_date
+        from board
+        where bno = #{bno}
+    </select>
+    <select id="count" resultType="int">
+        select count(*) from board
+    </select>
+    <insert id="insert" parameterType="BoardDto">
+        INSERT INTO board(title, content, writer)
+        VALUES
+            (#{title},#{content},#{writer})
+    </insert>
+    <update id="update" parameterType="BoardDto">
+        UPDATE board
+        SET title = #{title}
+          , content = #{content}
+          , up_date = now()
+        WHERE bno = #{bno} and writer = #{writer}
+    </update>
+    <delete id="delete">
+        DELETE from board where bno = #{bno} and writer = #{writer}
+    </delete>
+    <select id="selectAll" resultType="BoardDto">
+        SELECT bno, title, content, writer, view_cnt, comment_cnt, reg_date
+        FROM board
+        ORDER BY reg_date DESC, bno DESC
+    </select>
+    <select id="selectPage" parameterType="map" resultType="BoardDto">
+        SELECT bno, title, content, writer, view_cnt, comment_cnt, reg_date
+        FROM board
+        ORDER BY reg_date DESC, bno DESC
+            limit #{offset}, #{pageSize}
+    </select>
+
+    <update id="increaseViewCnt" parameterType="int">
+        update board
+        set view_cnt = view_cnt + 1
+        Where bno = #{bno}
+    </update>
+    <delete id="deleteAll">
+        delete from board
+    </delete>
+
+    <sql id="searchCondition">
+        <choose>
+            <when test='option=="T"'>
+                and title like concat('%', #{keyword}, '%')
+            </when>
+            <when test='option=="W"'>
+                and writer like concat('%', #{keyword}, '%')
+            </when>
+            <otherwise>
+                and (title like concat('%', #{keyword}, '%')
+                or content like concat('%', #{keyword}, '%'))
+            </otherwise>
+        </choose>
+    </sql>
+
+
+    <select id="searchSelectPage" parameterType="SearchCondition" resultType="BoardDto">
+        SELECT bno, title, content, writer, view_cnt, comment_cnt, reg_date
+        FROM board
+        Where true
+        <include refid="searchCondition"/>
+        ORDER BY reg_date DESC, bno DESC
+        limit #{offset}, #{pageSize}
+    </select>
+    <select id="searchResultCnt" parameterType="SearchCondition" resultType="int">
+        SELECT count(*)
+        FROM board
+        Where true
+        <include refid="searchCondition"/>
+
+    </select>
+
+    <update id="updateCommentCnt" parameterType="map">
+        UPDATE board
+        SET comment_cnt = comment_cnt + #{cnt}
+        WHERE bno = #{bno}
+    </update>
+</mapper>
